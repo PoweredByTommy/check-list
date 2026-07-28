@@ -309,7 +309,7 @@
     </header>
 
     <div class="new-list-row">
-      <input type="text" id="newListInput" placeholder="Шинэ бүлэг нэмэх... (ж: Даваа худалдан авалт)" autocomplete="off">
+      <input type="text" id="newListInput" placeholder="Шинэ бүлэг нэмэх... (ж: Даваа худалдан авалт)" autocomplete="off" enterkeyhint="enter">
       <button class="add-btn" id="addListBtn">+</button>
     </div>
 
@@ -329,7 +329,7 @@
     <div class="progress-track"><div class="progress-fill" id="detailProgressFill"></div></div>
 
     <div class="add-row">
-      <input type="text" id="itemInput" placeholder="Орц нэмэх..." autocomplete="off">
+      <input type="text" id="itemInput" placeholder="Орц нэмэх..." autocomplete="off" enterkeyhint="enter">
       <button class="add-btn" id="addItemBtn">+</button>
     </div>
 
@@ -355,7 +355,7 @@
 </footer>
 
 <script>
-  const APP_VERSION = '2026.07.28-4';
+  const APP_VERSION = '2026.07.28-5';
   const STORAGE_KEY = 'shopping_lists_v2';
   let lists = [];
   let currentListId = null;
@@ -492,11 +492,15 @@
 
   function addList(){
     const name = el.newListInput.value.trim();
-    if(!name) return;
+    if(!name){
+      el.newListInput.focus();
+      return;
+    }
     lists.push({ id: cryptoId(), name, createdAt: Date.now(), items: [] });
     el.newListInput.value = '';
     saveLists();
     renderLists();
+    el.newListInput.focus();
   }
 
   async function deleteList(id){
@@ -575,11 +579,15 @@
     const list = getCurrentList();
     if(!list) return;
     const name = el.itemInput.value.trim();
-    if(!name) return;
+    if(!name){
+      el.itemInput.focus();
+      return;
+    }
     list.items.push({ id: cryptoId(), name, done:false });
     el.itemInput.value = '';
     saveLists();
     renderDetail();
+    el.itemInput.focus();
   }
 
   function toggleItem(id){
@@ -609,13 +617,19 @@
     renderDetail();
   }
 
+  // Tapping + must not blur the input, otherwise the phone keyboard closes
+  // between entries and every add needs a tap on the field again.
+  [el.addListBtn, el.addItemBtn].forEach(btn => {
+    btn.addEventListener('mousedown', e => e.preventDefault());
+  });
+
   el.addListBtn.addEventListener('click', addList);
-  el.newListInput.addEventListener('keypress', e => { if(e.key === 'Enter') addList(); });
+  el.newListInput.addEventListener('keypress', e => { if(e.key === 'Enter'){ e.preventDefault(); addList(); } });
 
   el.backBtn.addEventListener('click', closeList);
 
   el.addItemBtn.addEventListener('click', addItem);
-  el.itemInput.addEventListener('keypress', e => { if(e.key === 'Enter') addItem(); });
+  el.itemInput.addEventListener('keypress', e => { if(e.key === 'Enter'){ e.preventDefault(); addItem(); } });
 
   el.clearDoneBtn.addEventListener('click', clearDone);
 
