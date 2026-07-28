@@ -240,10 +240,11 @@
   }
 
   .version{
-    text-align:center;
     font-size:11px;
     color:var(--muted);
-    padding: 4px 20px 24px;
+    white-space:nowrap;
+    align-self:flex-end;
+    padding-bottom: 4px;
   }
 
   .confirm-backdrop{
@@ -306,6 +307,7 @@
   <div id="screenLists">
     <header>
       <h1>Миний листүүд</h1>
+      <span class="version" id="appVersion"></span>
     </header>
 
     <div class="new-list-row">
@@ -314,7 +316,6 @@
     </div>
 
     <div class="lists" id="listsContainer"></div>
-    <div class="version" id="appVersion"></div>
   </div>
 
   <div id="screenDetail">
@@ -355,7 +356,7 @@
 </footer>
 
 <script>
-  const APP_VERSION = '2026.07.28-5';
+  const APP_VERSION = '2026.07.28-6';
   const STORAGE_KEY = 'shopping_lists_v2';
   let lists = [];
   let currentListId = null;
@@ -384,7 +385,7 @@
     appVersion: document.getElementById('appVersion'),
   };
 
-  el.appVersion.textContent = `Хувилбар ${APP_VERSION}`;
+  el.appVersion.textContent = `v${APP_VERSION}`;
 
   let confirmResolve = null;
 
@@ -601,18 +602,30 @@
     }
   }
 
-  function deleteItem(id){
+  async function deleteItem(id){
     const list = getCurrentList();
     if(!list) return;
-    list.items = list.items.filter(i => i.id !== id);
+    const item = list.items.find(i => i.id === id);
+    if(!item) return;
+    const ok = await askConfirm('Орц устгах уу?', `"${item.name}" орцыг жагсаалтаас устгана.`);
+    if(!ok) return;
+    const current = getCurrentList();
+    if(!current) return;
+    current.items = current.items.filter(i => i.id !== id);
     saveLists();
     renderDetail();
   }
 
-  function clearDone(){
+  async function clearDone(){
     const list = getCurrentList();
     if(!list) return;
-    list.items = list.items.filter(i => !i.done);
+    const doneCount = list.items.filter(i => i.done).length;
+    if(!doneCount) return;
+    const ok = await askConfirm('Бэлэн болсныг устгах уу?', `Тэмдэглэсэн ${doneCount} орцыг устгана. Буцаах боломжгүй.`);
+    if(!ok) return;
+    const current = getCurrentList();
+    if(!current) return;
+    current.items = current.items.filter(i => !i.done);
     saveLists();
     renderDetail();
   }
