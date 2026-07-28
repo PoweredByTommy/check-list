@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Шоппинг лист</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#3E5C3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Шоппинг">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<style>
+  :root{
+    --bg: #F7F3EC;
+    --ink: #2B2420;
+    --line: #E4DCCC;
+    --accent: #3E5C3A;
+    --accent-soft: #DDE8D6;
+    --done: #A79E8F;
+    --danger: #9C4B3C;
+    --card: #FFFFFF;
+    --muted: #7A7365;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);}
+  body{
+    font-family: 'Georgia', 'Noto Serif', serif;
+    color:var(--ink);
+    overflow-x:hidden;
+  }
+  .sans{ font-family: -apple-system, 'Helvetica Neue', sans-serif; }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  header{
+    padding: 26px 20px 16px;
+    border-bottom: 1px solid var(--line);
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .back-btn{
+    border:none;
+    background:none;
+    font-size:22px;
+    color:var(--accent);
+    cursor:pointer;
+    padding:0 4px 0 0;
+    line-height:1;
+  }
+  header h1{
+    font-size: 24px;
+    margin:0;
+    letter-spacing: 0.2px;
+    font-weight: 600;
+    flex:1;
+  }
+
+  #screenLists{ display:flex; flex-direction:column; flex:1; padding-bottom: 20px; }
+  .new-list-row{
+    display:flex;
+    gap:8px;
+    padding: 16px 20px;
+  }
+  .new-list-row input[type=text]{
+    flex:1;
+    font-size:15px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border:1px solid var(--line);
+    background: var(--card);
+    color:var(--ink);
+    outline:none;
+  }
+  .new-list-row input[type=text]:focus{ border-color: var(--accent); }
+  .add-btn{
+    width:44px;
+    border-radius:10px;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    font-size:22px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .add-btn:active{ transform: scale(0.95); }
+
+  .lists{ padding: 4px 20px 20px; flex:1; }
+  .list-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:12px;
+    cursor:pointer;
+    position:relative;
+  }
+  .list-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .list-card-title{
+    font-size:18px;
+    font-weight:600;
+  }
+  .list-card-del{
+    font-size:16px;
+    color:#C9C1B2;
+    padding:4px 6px;
+  }
+  .list-card-del:active{ color:var(--danger); }
+  .list-card-meta{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .list-progress-track{
+    height:5px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .list-progress-fill{
+    height:100%;
+    background:var(--accent);
+    transition: width .3s ease;
+  }
+  .empty{
+    text-align:center;
+    padding: 60px 20px;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  #screenDetail{ display:none; flex-direction:column; flex:1; padding-bottom: 90px; }
+  .detail-sub{
+    padding: 0 20px 14px;
+    font-size:13px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+  }
+  .progress-track{
+    margin: 0 20px 4px;
+    height:4px;
+    background:var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--accent);
+    width:0%;
+    transition: width .35s ease;
+  }
+  .add-row{
+    display:flex;
+    gap:8px;
+    padding: 16px 20px;
+  }
+  .add-row input[type=text]{
+    flex:1;
+    font-size:15px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border:1px solid var(--line);
+    background: var(--card);
+    color:var(--ink);
+    outline:none;
+  }
+  .add-row input[type=text]:focus{ border-color: var(--accent); }
+
+  .items{ flex:1; padding: 4px 20px 20px; }
+  .item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+  }
+  .checkbox{
+    width:22px;
+    height:22px;
+    min-width:22px;
+    border-radius:50%;
+    border: 2px solid var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:#fff;
+    font-size:13px;
+  }
+  .checkbox.checked{ background:var(--accent); }
+  .item-name{ flex:1; font-size:16px; }
+  .item.done .item-name{
+    color:var(--done);
+    text-decoration: line-through;
+  }
+  .del{
+    font-size:18px;
+    color:#C9C1B2;
+    cursor:pointer;
+    padding:4px;
+  }
+  .del:active{ color: var(--danger); }
+
+  footer{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    max-width:480px;
+    margin:0 auto;
+    background: var(--bg);
+    border-top:1px solid var(--line);
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .clear-btn{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:13px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="app sans">
+
+  <div id="screenLists">
+    <header>
+      <h1>Миний листүүд</h1>
+    </header>
+
+    <div class="new-list-row">
+      <input type="text" id="newListInput" placeholder="Шинэ бүлэг нэмэх... (ж: Даваа худалдан авалт)" autocomplete="off">
+      <button class="add-btn" id="addListBtn">+</button>
+    </div>
+
+    <div class="lists" id="listsContainer"></div>
+  </div>
+
+  <div id="screenDetail">
+    <header>
+      <button class="back-btn" id="backBtn">←</button>
+      <h1 id="detailTitle">Бүлэг</h1>
+    </header>
+    <div class="detail-sub">
+      <span id="detailStatus">0 / 0 бэлэн</span>
+      <span id="detailDate"></span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="detailProgressFill"></div></div>
+
+    <div class="add-row">
+      <input type="text" id="itemInput" placeholder="Орц нэмэх..." autocomplete="off">
+      <button class="add-btn" id="addItemBtn">+</button>
+    </div>
+
+    <div class="items" id="itemsContainer"></div>
+  </div>
+
+</div>
+
+<footer id="detailFooter" style="display:none;">
+  <span>Офлайн ажиллана, утсан дээрээ хадгалагдана</span>
+  <button class="clear-btn" id="clearDoneBtn">Бэлэн болсныг устгах</button>
+</footer>
+
+<script>
+  const STORAGE_KEY = 'shopping_lists_v2';
+  let lists = [];
+  let currentListId = null;
+
+  const el = {
+    screenLists: document.getElementById('screenLists'),
+    screenDetail: document.getElementById('screenDetail'),
+    newListInput: document.getElementById('newListInput'),
+    addListBtn: document.getElementById('addListBtn'),
+    listsContainer: document.getElementById('listsContainer'),
+    backBtn: document.getElementById('backBtn'),
+    detailTitle: document.getElementById('detailTitle'),
+    detailStatus: document.getElementById('detailStatus'),
+    detailDate: document.getElementById('detailDate'),
+    detailProgressFill: document.getElementById('detailProgressFill'),
+    itemInput: document.getElementById('itemInput'),
+    addItemBtn: document.getElementById('addItemBtn'),
+    itemsContainer: document.getElementById('itemsContainer'),
+    clearDoneBtn: document.getElementById('clearDoneBtn'),
+    detailFooter: document.getElementById('detailFooter'),
+  };
+
+  function cryptoId(){
+    return Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  }
+
+  function seedIfEmpty(){
+    return [
+      {
+        id: cryptoId(),
+        name: 'Хоолны орц',
+        createdAt: Date.now(),
+        items: [
+          { id: cryptoId(), name: 'Шар манжин', done:false },
+          { id: cryptoId(), name: 'Лууван', done:false },
+          { id: cryptoId(), name: 'Дарсан өргөст хэмх', done:false },
+          { id: cryptoId(), name: 'Махны амтлагч', done:false },
+        ]
+      }
+    ];
+  }
+
+  function loadLists(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        lists = JSON.parse(raw);
+      } else {
+        lists = seedIfEmpty();
+        saveLists();
+      }
+    }catch(e){
+      lists = seedIfEmpty();
+      saveLists();
+    }
+  }
+
+  function saveLists(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lists));
+    }catch(e){
+      console.error('Хадгалахад алдаа гарлаа', e);
+    }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderLists(){
+    el.listsContainer.innerHTML = '';
+
+    if(lists.length === 0){
+      el.listsContainer.innerHTML = '<div class="empty">Бүлэг алга байна.<br>Дээрээс шинэ бүлэг нэмнэ үү.</div>';
+      return;
+    }
+
+    const sorted = [...lists].sort((a,b) => b.createdAt - a.createdAt);
+
+    sorted.forEach(list => {
+      const total = list.items.length;
+      const done = list.items.filter(i => i.done).length;
+      const pct = total ? Math.round((done/total)*100) : 0;
+
+      const card = document.createElement('div');
+      card.className = 'list-card';
+      card.innerHTML = `
+        <div class="list-card-top">
+          <div class="list-card-title">${escapeHtml(list.name)}</div>
+          <div class="list-card-del" data-id="${list.id}">✕</div>
+        </div>
+        <div class="list-card-meta">${done} / ${total} гүйцэтгэсэн</div>
+        <div class="list-progress-track"><div class="list-progress-fill" style="width:${pct}%"></div></div>
+      `;
+      card.addEventListener('click', (e) => {
+        if(e.target.classList.contains('list-card-del')) return;
+        openList(list.id);
+      });
+      card.querySelector('.list-card-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteList(list.id);
+      });
+      el.listsContainer.appendChild(card);
+    });
+  }
+
+  function addList(){
+    const name = el.newListInput.value.trim();
+    if(!name) return;
+    lists.push({ id: cryptoId(), name, createdAt: Date.now(), items: [] });
+    el.newListInput.value = '';
+    saveLists();
+    renderLists();
+  }
+
+  function deleteList(id){
+    lists = lists.filter(l => l.id !== id);
+    saveLists();
+    renderLists();
+  }
+
+  function openList(id){
+    currentListId = id;
+    el.screenLists.style.display = 'none';
+    el.screenDetail.style.display = 'flex';
+    el.detailFooter.style.display = 'flex';
+    el.detailDate.textContent = new Date().toLocaleDateString('mn-MN', { month:'long', day:'numeric' });
+    renderDetail();
+  }
+
+  function closeList(){
+    currentListId = null;
+    el.screenDetail.style.display = 'none';
+    el.detailFooter.style.display = 'none';
+    el.screenLists.style.display = 'flex';
+    renderLists();
+  }
+
+  function getCurrentList(){
+    return lists.find(l => l.id === currentListId);
+  }
+
+  function renderDetail(){
+    const list = getCurrentList();
+    if(!list){ closeList(); return; }
+
+    el.detailTitle.textContent = list.name;
+    el.itemsContainer.innerHTML = '';
+
+    if(list.items.length === 0){
+      el.itemsContainer.innerHTML = '<div class="empty">Энэ бүлэгт орц алга.<br>Дээрээс нэмнэ үү.</div>';
+    } else {
+      list.items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'item' + (item.done ? ' done' : '');
+        row.innerHTML = `
+          <div class="checkbox ${item.done ? 'checked' : ''}" data-id="${item.id}">${item.done ? '✓' : ''}</div>
+          <div class="item-name">${escapeHtml(item.name)}</div>
+          <div class="del" data-id="${item.id}">✕</div>
+        `;
+        el.itemsContainer.appendChild(row);
+      });
+    }
+
+    const total = list.items.length;
+    const done = list.items.filter(i => i.done).length;
+    el.detailStatus.textContent = `${done} / ${total} бэлэн`;
+    el.detailProgressFill.style.width = total ? `${(done/total)*100}%` : '0%';
+
+    el.itemsContainer.querySelectorAll('.checkbox').forEach(cb => {
+      cb.addEventListener('click', () => toggleItem(cb.dataset.id));
+    });
+    el.itemsContainer.querySelectorAll('.del').forEach(d => {
+      d.addEventListener('click', () => deleteItem(d.dataset.id));
+    });
+  }
+
+  function addItem(){
+    const list = getCurrentList();
+    if(!list) return;
+    const name = el.itemInput.value.trim();
+    if(!name) return;
+    list.items.push({ id: cryptoId(), name, done:false });
+    el.itemInput.value = '';
+    saveLists();
+    renderDetail();
+  }
+
+  function toggleItem(id){
+    const list = getCurrentList();
+    if(!list) return;
+    const item = list.items.find(i => i.id === id);
+    if(item){
+      item.done = !item.done;
+      saveLists();
+      renderDetail();
+    }
+  }
+
+  function deleteItem(id){
+    const list = getCurrentList();
+    if(!list) return;
+    list.items = list.items.filter(i => i.id !== id);
+    saveLists();
+    renderDetail();
+  }
+
+  function clearDone(){
+    const list = getCurrentList();
+    if(!list) return;
+    list.items = list.items.filter(i => !i.done);
+    saveLists();
+    renderDetail();
+  }
+
+  el.addListBtn.addEventListener('click', addList);
+  el.newListInput.addEventListener('keypress', e => { if(e.key === 'Enter') addList(); });
+
+  el.backBtn.addEventListener('click', closeList);
+
+  el.addItemBtn.addEventListener('click', addItem);
+  el.itemInput.addEventListener('keypress', e => { if(e.key === 'Enter') addItem(); });
+
+  el.clearDoneBtn.addEventListener('click', clearDone);
+
+  loadLists();
+  renderLists();
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.warn('Service worker бүртгэгдсэнгүй:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
