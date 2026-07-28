@@ -46,15 +46,26 @@
     align-items:center;
     gap:12px;
   }
-  .back-btn{
+  /* Sits in the bottom-right thumb zone, above the footer bar. */
+  .back-fab{
+    position:fixed;
+    right: max(20px, calc(50% - 220px));
+    bottom: calc(74px + env(safe-area-inset-bottom));
+    width:54px;
+    height:54px;
+    border-radius:50%;
     border:none;
-    background:none;
-    font-size:22px;
-    color:var(--accent);
-    cursor:pointer;
-    padding:0 4px 0 0;
+    background:var(--accent);
+    color:#fff;
+    font-size:24px;
     line-height:1;
+    cursor:pointer;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 6px 18px rgba(43,36,32,0.25);
+    z-index: 40;
   }
+  .back-fab:active{ transform: scale(0.94); }
   header h1{
     font-size: 24px;
     margin:0;
@@ -141,7 +152,7 @@
     font-size:14px;
   }
 
-  #screenDetail{ display:none; flex-direction:column; flex:1; padding-bottom: 90px; }
+  #screenDetail{ display:none; flex-direction:column; flex:1; padding-bottom: 140px; }
   .detail-sub{
     padding: 0 20px 14px;
     font-size:13px;
@@ -320,7 +331,6 @@
 
   <div id="screenDetail">
     <header>
-      <button class="back-btn" id="backBtn">←</button>
       <h1 id="detailTitle">Бүлэг</h1>
     </header>
     <div class="detail-sub">
@@ -350,13 +360,15 @@
   </div>
 </div>
 
+<button class="back-fab" id="backBtn" style="display:none;" aria-label="Буцах">←</button>
+
 <footer id="detailFooter" style="display:none;">
   <span>Офлайн ажиллана, утсан дээрээ хадгалагдана</span>
   <button class="clear-btn" id="clearDoneBtn">Бэлэн болсныг устгах</button>
 </footer>
 
 <script>
-  const APP_VERSION = '2026.07.28-6';
+  const APP_VERSION = '2026.07.28-7';
   const STORAGE_KEY = 'shopping_lists_v2';
   let lists = [];
   let currentListId = null;
@@ -525,6 +537,7 @@
     el.screenLists.style.display = 'none';
     el.screenDetail.style.display = 'flex';
     el.detailFooter.style.display = 'flex';
+    el.backBtn.style.display = 'flex';
     el.detailDate.textContent = new Date().toLocaleDateString('mn-MN', { month:'long', day:'numeric' });
     renderDetail();
   }
@@ -533,6 +546,7 @@
     currentListId = null;
     el.screenDetail.style.display = 'none';
     el.detailFooter.style.display = 'none';
+    el.backBtn.style.display = 'none';
     el.screenLists.style.display = 'flex';
     renderLists();
   }
