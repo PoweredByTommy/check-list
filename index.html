@@ -238,6 +238,59 @@
     font-size:13px;
     cursor:pointer;
   }
+
+  .confirm-backdrop{
+    position:fixed;
+    inset:0;
+    background: rgba(43,36,32,0.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+    z-index: 50;
+  }
+  .confirm-backdrop.open{ display:flex; }
+  .confirm-box{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding: 22px 20px 16px;
+    width:100%;
+    max-width: 340px;
+    box-shadow: 0 12px 32px rgba(43,36,32,0.18);
+  }
+  .confirm-title{
+    font-size:17px;
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .confirm-text{
+    font-size:14px;
+    color:var(--muted);
+    line-height:1.5;
+    margin-bottom:18px;
+    word-break: break-word;
+  }
+  .confirm-actions{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+  }
+  .confirm-actions button{
+    border:1px solid var(--line);
+    background:var(--card);
+    color:var(--ink);
+    font-size:14px;
+    font-family:inherit;
+    border-radius:10px;
+    padding: 10px 16px;
+    cursor:pointer;
+  }
+  .confirm-actions .danger{
+    background:var(--danger);
+    border-color:var(--danger);
+    color:#fff;
+  }
 </style>
 </head>
 <body>
@@ -277,6 +330,17 @@
 
 </div>
 
+<div class="confirm-backdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle">Устгах уу?</div>
+    <div class="confirm-text" id="confirmText"></div>
+    <div class="confirm-actions">
+      <button type="button" id="confirmCancel">Болих</button>
+      <button type="button" class="danger" id="confirmOk">Устгах</button>
+    </div>
+  </div>
+</div>
+
 <footer id="detailFooter" style="display:none;">
   <span>Офлайн ажиллана, утсан дээрээ хадгалагдана</span>
   <button class="clear-btn" id="clearDoneBtn">Бэлэн болсныг устгах</button>
@@ -303,7 +367,30 @@
     itemsContainer: document.getElementById('itemsContainer'),
     clearDoneBtn: document.getElementById('clearDoneBtn'),
     detailFooter: document.getElementById('detailFooter'),
+    confirmBackdrop: document.getElementById('confirmBackdrop'),
+    confirmTitle: document.getElementById('confirmTitle'),
+    confirmText: document.getElementById('confirmText'),
+    confirmCancel: document.getElementById('confirmCancel'),
+    confirmOk: document.getElementById('confirmOk'),
   };
+
+  let confirmResolve = null;
+
+  function askConfirm(title, text){
+    if(confirmResolve) closeConfirm(false);
+    el.confirmTitle.textContent = title;
+    el.confirmText.textContent = text;
+    el.confirmBackdrop.classList.add('open');
+    el.confirmCancel.focus();
+    return new Promise(resolve => { confirmResolve = resolve; });
+  }
+
+  function closeConfirm(answer){
+    el.confirmBackdrop.classList.remove('open');
+    const resolve = confirmResolve;
+    confirmResolve = null;
+    if(resolve) resolve(answer);
+  }
 
   function cryptoId(){
     return Math.random().toString(36).slice(2,10) + Date.now().toString(36);
@@ -400,12 +487,17 @@
     renderLists();
   }
 
-  function deleteList(id){
+  async function deleteList(id){
     const list = lists.find(l => l.id === id);
     if(!list) return;
     const count = list.items.length;
     const detail = count ? ` (${count} орцтой)` : '';
-    if(!confirm(`"${list.name}"${detail} бүлгийг устгах уу?\n\nБуцаах боломжгүй.`)) return;
+    const ok = await askConfirm(
+      'Бүлэг устгах уу?',
+      `"${list.name}"${detail} бүлгийг устгана. Буцаах боломжгүй.`
+    );
+    if(!ok) return;
+    if(!lists.some(l => l.id === id)) return;
     lists = lists.filter(l => l.id !== id);
     saveLists();
     renderLists();
@@ -514,6 +606,17 @@
   el.itemInput.addEventListener('keypress', e => { if(e.key === 'Enter') addItem(); });
 
   el.clearDoneBtn.addEventListener('click', clearDone);
+
+  el.confirmOk.addEventListener('click', () => closeConfirm(true));
+  el.confirmCancel.addEventListener('click', () => closeConfirm(false));
+  el.confirmBackdrop.addEventListener('click', (e) => {
+    if(e.target === el.confirmBackdrop) closeConfirm(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if(!confirmResolve) return;
+    if(e.key === 'Escape') closeConfirm(false);
+    if(e.key === 'Enter') closeConfirm(true);
+  });
 
   loadLists();
   renderLists();
