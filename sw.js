@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shopping-list-v3';
+const CACHE_NAME = 'shopping-list-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -24,12 +24,28 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  // The page itself goes network-first so a new deploy shows up right away;
+  // the cache is only the offline fallback.
+  if (req.mode === 'navigate' || req.destination === 'document') {
+    event.respondWith(
+      fetch(req).then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        return response;
+      }).catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
+    caches.match(req).then((cached) => {
+      return cached || fetch(req).then((response) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.method === 'GET' && response.status === 200) {
-            cache.put(event.request, response.clone());
+          if (response.status === 200) {
+            cache.put(req, response.clone());
           }
           return response;
         });

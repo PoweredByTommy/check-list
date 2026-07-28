@@ -239,6 +239,13 @@
     cursor:pointer;
   }
 
+  .version{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    padding: 4px 20px 24px;
+  }
+
   .confirm-backdrop{
     position:fixed;
     inset:0;
@@ -307,6 +314,7 @@
     </div>
 
     <div class="lists" id="listsContainer"></div>
+    <div class="version" id="appVersion"></div>
   </div>
 
   <div id="screenDetail">
@@ -347,6 +355,7 @@
 </footer>
 
 <script>
+  const APP_VERSION = '2026.07.28-4';
   const STORAGE_KEY = 'shopping_lists_v2';
   let lists = [];
   let currentListId = null;
@@ -372,7 +381,10 @@
     confirmText: document.getElementById('confirmText'),
     confirmCancel: document.getElementById('confirmCancel'),
     confirmOk: document.getElementById('confirmOk'),
+    appVersion: document.getElementById('appVersion'),
   };
+
+  el.appVersion.textContent = `Хувилбар ${APP_VERSION}`;
 
   let confirmResolve = null;
 
@@ -622,8 +634,23 @@
   renderLists();
 
   if('serviceWorker' in navigator){
+    // A new service worker calls skipWaiting/claim, so when it takes over the
+    // page is still running the old code — reload once to pick up the update.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err => {
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        reg.update();
+        document.addEventListener('visibilitychange', () => {
+          if(document.visibilityState === 'visible') reg.update();
+        });
+      }).catch(err => {
         console.warn('Service worker бүртгэгдсэнгүй:', err);
       });
     });
