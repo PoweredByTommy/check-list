@@ -401,6 +401,11 @@
   }
 
   function deleteList(id){
+    const list = lists.find(l => l.id === id);
+    if(!list) return;
+    const count = list.items.length;
+    const detail = count ? ` (${count} орцтой)` : '';
+    if(!confirm(`"${list.name}"${detail} бүлгийг устгах уу?\n\nБуцаах боломжгүй.`)) return;
     lists = lists.filter(l => l.id !== id);
     saveLists();
     renderLists();
